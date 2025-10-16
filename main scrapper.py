@@ -59,8 +59,8 @@ except Exception:
 # ------------------------------------------------------------------
 DB_CONFIG = {
     "dbname": os.getenv("PGDATABASE", os.getenv("DB_NAME", "ai_butler_test")),
-    "user": os.getenv("PGUSER", os.getenv("DB_USER", "read_only_user")),
-    "password": os.getenv("PGPASSWORD", os.getenv("DB_PASSWORD", "rousr$a1but")),
+    "user": os.getenv("PGUSER", os.getenv("DB_USER", "app_user")),
+    "password": os.getenv("PGPASSWORD", os.getenv("DB_PASSWORD", "App$gr0c")),
     "host": os.getenv("PGHOST", os.getenv("DB_HOST", "54.144.89.225")),
     "port": int(os.getenv("PGPORT", os.getenv("DB_PORT", "5432")) or 5432),
 }
@@ -7959,7 +7959,7 @@ def run_enhanced_scraper(input_csv: Path, output_csv: Path, limit: Optional[int]
     
     # Write flat export rows into product_aisles table with upsert, or preview-only
     try:
-        preview_only = os.getenv("PREVIEW_ONLY", "0").lower() in ("1", "true", "yes")
+        preview_only = os.getenv("PREVIEW_ONLY", "0").lower() in ("1", "false", "no")
         if flat_export_rows:
             # Save preview CSV always
             preview_path = Path.cwd() / "product_aisles_preview.csv"
@@ -7975,16 +7975,14 @@ def run_enhanced_scraper(input_csv: Path, output_csv: Path, limit: Optional[int]
         with conn.cursor() as cur:
             if flat_export_rows:
                 upsert_sql = (
-                    "INSERT INTO product_aisles (product_code, source, store, store_link, aisle) "
-                    "VALUES (%s, %s, %s, %s, %s) "
+                    "INSERT INTO product_aisles (product_code, store, store_link, aisle) "
+                    "VALUES (%s, %s, %s, %s) "
                     "ON CONFLICT (product_code, store) DO UPDATE SET "
                     "aisle = EXCLUDED.aisle, store_link = EXCLUDED.store_link, modified_date = CURRENT_TIMESTAMP"
                 )
-                default_source = os.getenv("AISLE_SOURCE", "scraper")
                 data = [
                     (
                         r.get('product code'),
-                        default_source,
                         r.get('Store'),
                         r.get('Store_link'),
                         r.get('aisle')
@@ -11698,7 +11696,7 @@ if __name__ == "__main__":
         output_file = Path(sys.argv[2])
     
     # 🚀 PROCESS LIMITED ROWS INITIALLY
-    test_limit = 17
+    test_limit = 100
     
     try:
         logger.info("🚀 Starting Enhanced Web Scraper")
